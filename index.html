@@ -1,0 +1,90 @@
+<html>
+<head>
+  <title>YOUSTITI</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        var center = [52.45, 13.35],
+        zoom = 2,
+        moreZoom = 9,
+        maxZoom = 18
+        var geoLocationOptions = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+
+        var latitude, longitude, mxAcc, display_name, osm_id, myMarker
+
+        function cb(data) {
+        display_name = data.display_name
+        osm_id = data.osm_id
+        myMarker.addTo(map)
+            .bindPopup(`<b>Your location</b><br>
+                        Latitude: ${latitude} <br>
+                        Longitude: ${longitude} <br>
+                        More or less: ${myAcc} 
+                            meters <br>
+                        <b>Your address</b><br>
+                        ${display_name} <br>
+                        <b>OSM ID</b><br>
+                        ${osm_id} 
+                        `).openPopup()
+
+        }
+
+        function succès(position) {
+
+            latitude = position.coords.latitude.toFixed(6)
+            longitude = position.coords.longitude.toFixed(6)
+            myAcc = position.coords.accuracy
+            latLng = [latitude, longitude]
+            map.setZoom(moreZoom)
+            map.panTo(latLng)
+
+            var script = document.createElement('script')
+            script.id = 'nominatim'
+            script.async = true 
+            script.src = 'https://nominatim.openstreetmap.org/reverse?json_callback=cb&format=json&lat=' + latitude + '&lon=' +
+                longitude + '&zoom=27&addressdetails=1'
+            document.body.appendChild(script)
+            myMarker = L.marker(latLng)
+            document.body.removeChild(script)
+        }
+
+        function echec(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`)
+        }
+        navigator.geolocation.getCurrentPosition(succès, echec, geoLocationOptions)
+        var map = L.map('map', {
+        contextmenu: true,
+        contextmenuWidth: 140,
+        contextmenuItems: [{
+            text: 'Center map here',
+            callback: centerMap
+            },
+            {
+            text: 'Add marker here',
+            callback: addMarker
+            }
+        ]
+        }).setView(center, zoom)
+        L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: maxZoom
+        }).addTo(map)
+        function centerMap(e) {
+        map.panTo(e.latlng)
+        }
+        function addMarker(e) {
+        L.marker(e.latlng).addTo(map)
+        }
+    </script>
+</body>
+
+</html>
